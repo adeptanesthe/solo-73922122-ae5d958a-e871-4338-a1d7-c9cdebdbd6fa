@@ -10,7 +10,7 @@
 <header class="topbar">
   <h1>技术编辑选题推荐系统</h1>
   <div class="meta">
-    <span>字符 2~3 元 TF-IDF（仅文章拟合）· 余弦相关度 · 全局最优队列</span>
+    <span>字符 2~3 元 TF-IDF · 余弦相关度 · 全局最优队列 · 段落复序</span>
     <button id="btn-reset" class="btn btn-ghost">重置演示</button>
   </div>
 </header>
@@ -59,6 +59,58 @@
     <h2>4. 本地文章库（30 篇）</h2>
     <input id="article-filter" class="filter-input" placeholder="按标题 / 主题 / 作者筛选……" />
     <div id="article-list" class="article-list"></div>
+  </section>
+
+  <!-- 通栏：段落复序 -->
+  <section class="panel panel-wide">
+    <h2>5. 段落复序（排版故障恢复）</h2>
+    <p class="hint">
+      粘贴 4～8 段被打散的稿件（段与段之间用空行分隔，每段 20～400 字），指定首段、末段，
+      并可最多各标记两组“紧接 / 先于”关系。系统<b>只在这批段落上</b>拟合字符 2~3 元 TF-IDF，
+      以相邻段落余弦相似度之和选出满足全部标记、每段恰用一次的最高分顺序（同分按原输入序号取最小）。
+      修改段落或标记后旧建议立即撤下，需重新生成。
+    </p>
+    <div class="reorder-grid">
+      <div>
+        <label class="field-label" for="para-input">打乱的原稿（空行分段）</label>
+        <textarea id="para-input" rows="9" placeholder="第一段……&#10;&#10;第二段……&#10;&#10;第三段……"></textarea>
+        <div class="btn-row">
+          <button id="btn-sample" class="btn">填入示例稿件</button>
+          <span id="para-parse-msg" class="msg"></span>
+        </div>
+        <div id="para-preview" class="para-preview"></div>
+      </div>
+      <div>
+        <label class="field-label">首段 / 末段（必须是不同段落）</label>
+        <div class="mark-row">
+          <select id="first-select" class="mark-select"></select>
+          <select id="last-select" class="mark-select"></select>
+        </div>
+        <label class="field-label">“紧接”标记（最多两组）：前者之后立即接后者</label>
+        <div class="mark-row">
+          <select class="mark-select adj-from" data-row="0"></select><span class="mark-word">紧接</span>
+          <select class="mark-select adj-to" data-row="0"></select>
+        </div>
+        <div class="mark-row">
+          <select class="mark-select adj-from" data-row="1"></select><span class="mark-word">紧接</span>
+          <select class="mark-select adj-to" data-row="1"></select>
+        </div>
+        <label class="field-label">“先于”标记（最多两组）：前者排在后者之前（不必相邻）</label>
+        <div class="mark-row">
+          <select class="mark-select bef-from" data-row="0"></select><span class="mark-word">先于</span>
+          <select class="mark-select bef-to" data-row="0"></select>
+        </div>
+        <div class="mark-row">
+          <select class="mark-select bef-from" data-row="1"></select><span class="mark-word">先于</span>
+          <select class="mark-select bef-to" data-row="1"></select>
+        </div>
+        <div class="btn-row">
+          <button id="btn-reorder" class="btn btn-primary">生成复序建议</button>
+          <span id="reorder-msg" class="msg"></span>
+        </div>
+      </div>
+    </div>
+    <div id="reorder-result" class="reorder-result"></div>
   </section>
 </main>
 

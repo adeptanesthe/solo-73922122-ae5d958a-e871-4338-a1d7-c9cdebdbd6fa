@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 
 from . import database
 from .articles_data import ARTICLES, TOPICS
+from .reorder import ReorderInputError, solve_reorder
 from .tfidf_model import get_model
 from .worker import get_worker
 
@@ -32,6 +33,15 @@ class ConditionIn(BaseModel):
 class ExclusionIn(BaseModel):
     article_id: int = Field(ge=1)
     compute_delay_ms: int = Field(default=0, ge=0, le=30000)
+
+
+class ReorderIn(BaseModel):
+    paragraphs: list[str] = Field(description="打散的段落，4~8 段，每段 20~400 字")
+    first: int = Field(description="首段序号（0 基）")
+    last: int = Field(description="末段序号（0 基）")
+    adjacent: list[tuple[int, int]] = Field(default_factory=list, description="“紧接”标记，最多 2 组")
+    before: list[tuple[int, int]] = Field(default_factory=list, description="“先于”标记，最多 2 组")
+    fingerprint: str | None = Field(default=None, description="客户端输入指纹，原样回显用于丢弃迟到结果")
 
 def _validate_quotas(quotas: dict[str, int]) -> None:
     unknown = set(quotas) - set(TOPICS)
@@ -175,3 +185,42 @@ def reset_demo() -> dict:
     """重置演示：清空揭示、排除与任务，世代回到 1。"""
     database.reset_all(DEFAULT_INTEREST, {t: 1 for t in TOPICS})
     return _status_payload()
+
+
+@app.post("/api/reorder")
+def reorder(body: ReorderIn) -> dict:
+    """段落复序：只在这批段落上拟合字符 2~3 元 TF-IDF，枚举满足全部标记、
+    每段恰用一次的排列，返回相邻余弦相似度之和最高的顺序及各衔接得分。
+
+    本接口无状态：结果只由本次输入决定。客户端凭 fingerprint 与请求序号
+    丢弃迟到响应，保证旧输入的结果不会覆盖新输入。
+    """
+    try:
+        result = solve_reorder(
+            paragraphs=body.paragraphs,
+            first=body.first,
+            last=body.last,
+            adjacent=body.adjacent,
+            before=body.before,
+        )
+    except ReorderInputError as exc:
+        raise HTTPException(422, str(exc))
+    payload = {
+        "ok": result.ok,
+        "reason": result.reason,
+        "feature_count": result.feature_count,
+        "fingerprint": body.fingerprint,
+    }
+    if result.ok:
+        payload.update(
+            {
+                "order": result.order,
+                "paragraphs": [
+                    {"index": i, "text": body.paragraphs[i].strip()}
+                    for i in result.order
+                ],
+                "links": result.links,
+                "total_score": result.total_score,
+            }
+        )
+    return payload
