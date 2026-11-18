@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>技术编辑选题推荐系统</title>
+<link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+<header class="topbar">
+  <h1>技术编辑选题推荐系统</h1>
+  <div class="meta">
+    <span>字符 2~3 元 TF-IDF（仅文章拟合）· 余弦相关度 · 全局最优队列</span>
+    <button id="btn-reset" class="btn btn-ghost">重置演示</button>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- 左栏：条件控制 -->
+  <section class="panel">
+    <h2>1. 兴趣与主题配额</h2>
+    <label class="field-label" for="interest">兴趣短文</label>
+    <textarea id="interest" rows="4" placeholder="描述你想阅读的方向，例如：关注模型训练成本与数据分析……"></textarea>
+
+    <label class="field-label">六篇队列的各主题精确篇数（总和须为 6）</label>
+    <div id="quota-grid" class="quota-grid"></div>
+    <div id="quota-sum" class="quota-sum">当前合计：<b>6</b> / 6</div>
+
+    <label class="field-label" for="delay">模拟慢重算延迟（毫秒，用于演示并发与过期保护）</label>
+    <input id="delay" type="number" min="0" max="30000" step="500" value="0" />
+
+    <div class="btn-row">
+      <button id="btn-apply" class="btn btn-primary">应用条件并重算</button>
+    </div>
+    <div id="condition-msg" class="msg"></div>
+
+    <h2 style="margin-top:24px">2. 排除文章（仅未揭示）</h2>
+    <div class="exclusion-row">
+      <select id="exclude-select"></select>
+      <button id="btn-exclude" class="btn">排除所选</button>
+    </div>
+    <div id="exclusion-list" class="chip-list"></div>
+  </section>
+
+  <!-- 中栏：队列与揭示 -->
+  <section class="panel">
+    <h2>3. 推荐队列（每次揭示两篇）</h2>
+    <div class="job-status" id="job-status">尚未加载</div>
+    <ol id="queue" class="queue"></ol>
+    <div class="btn-row">
+      <button id="btn-reveal" class="btn btn-primary">揭示下一组（两篇）</button>
+      <span id="reveal-msg" class="msg"></span>
+    </div>
+    <div class="generation-line" id="generation-line"></div>
+  </section>
+
+  <!-- 右栏：文章库 -->
+  <section class="panel">
+    <h2>4. 本地文章库（30 篇）</h2>
+    <input id="article-filter" class="filter-input" placeholder="按标题 / 主题 / 作者筛选……" />
+    <div id="article-list" class="article-list"></div>
+  </section>
+</main>
+
+<dialog id="article-dialog">
+  <article>
+    <h3 id="dlg-title"></h3>
+    <div class="dlg-meta" id="dlg-meta"></div>
+    <p id="dlg-body"></p>
+    <button class="btn" id="dlg-close">关闭</button>
+  </article>
+</dialog>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
